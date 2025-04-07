@@ -4,7 +4,6 @@ import 'package:trashee_collecter/API/model/allbinslistinobj.dart';
 import 'package:trashee_collecter/API/model/fullbinslistinobj.dart';
 import 'package:trashee_collecter/API/model/halfbinsListinobj.dart';
 import 'package:trashee_collecter/API/model/totalemptybinslistinobj.dart';
-
 import 'package:trashee_collecter/API/network%20manager/http_helper.dart';
 
 class RestClient {
@@ -107,7 +106,7 @@ class RestClient {
   }
 
   // total Dustbin:
-  static Future<List<AllBinsListInObj>> getTotalbinsListInObj() async {
+  static Future<List<TotalEmptyListInObj>> getTotalbinsListInObj() async {
     print("Starting getTotalbinsListInObj...");
     try {
       const String apiUrl =
@@ -121,12 +120,17 @@ class RestClient {
       print("API request completed. Response received.");
       print("API Response: $response");
 
-      if (response.containsKey('dustbins') && response['dustbins'] is List) {
-        List<AllBinsListInObj> data = [AllBinsListInObj.fromJson(response)];
+      if (response['dustbins'] != null) {
+        List<TotalEmptyListInObj> data = [];
+        response['dustbins'].forEach((v) {
+          data.add(TotalEmptyListInObj.fromJson({
+            'dustbins': [v]
+          }));
+        });
         print("Parsed Data: $data");
         return data;
       } else {
-        print("No dustbins found.");
+        print("No assignments found in the response.");
         return [];
       }
     } catch (e, stackTrace) {

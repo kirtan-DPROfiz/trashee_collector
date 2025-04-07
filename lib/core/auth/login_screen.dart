@@ -93,10 +93,13 @@ class _LoginScreenState extends State<LoginScreen> {
  */
 
 // new
+import 'dart:developer';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:trashee_collecter/API/network%20manager/rest_client.dart';
+import 'package:trashee_collecter/localStorage/sharedpreferencehelper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -111,8 +114,21 @@ class _LoginScreenState extends State<LoginScreen> {
   TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
   bool obscurePassword = true;
-
+  @override
   void initState() {
+    super.initState();
+    _checkLoginStatus(); // Check if user is already logged in
+  }
+
+  // Check login status
+  Future<void> _checkLoginStatus() async {
+    bool isLoggedIn = await SharedPreferenceHelper.isUserLoggedIn();
+    if (isLoggedIn) {
+      Get.offNamed('/dashboard'); // Redirect to dashboard
+    }
+  }
+
+/*   void initState() {
     super.initState();
     getAndPrintFCMToken();
   }
@@ -160,182 +176,212 @@ class _LoginScreenState extends State<LoginScreen> {
       return _getFCMToken(); // Recursive retry
     }
   }
-
+ */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('FCM Token Example')),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Logo image
-              //Image.asset("android/assets/images/trashee_collecter.jpg"),
-              Container(
-                child: Text(
-                  "Sign In",
-                  style: TextStyle(color: Colors.blue, fontSize: 24),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              Container(
-                child: Text(
-                  "TRASHEE",
-                  style: TextStyle(color: Colors.black, fontSize: 55),
-                ),
-              ),
-
-              // Collector with dividers
-              SizedBox(
-                width: 220,
-                child: Row(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height -
+                  MediaQuery.of(context).padding.top -
+                  MediaQuery.of(context).padding.bottom,
+            ),
+            child: IntrinsicHeight(
+              child: Form(
+                key: _formKey,
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Expanded(
-                      child: Divider(
-                        thickness: 2,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    // Logo image
+                    Container(
                       child: Text(
-                        "collector",
-                        style: TextStyle(color: Colors.black, fontSize: 18),
+                        "Sign In",
+                        style: TextStyle(color: Colors.blue, fontSize: 24),
                       ),
                     ),
-                    Expanded(
-                      child: Divider(
-                        thickness: 2,
-                        color: Colors.grey,
+                    const SizedBox(height: 20),
+
+                    Container(
+                      child: Text(
+                        "TRASHEE",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 55,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
+                    ),
+
+                    // Collector with dividers
+                    SizedBox(
+                      width: 220,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Divider(
+                              thickness: 2,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              "collector",
+                              style:
+                                  TextStyle(color: Colors.black, fontSize: 18),
+                            ),
+                          ),
+                          Expanded(
+                            child: Divider(
+                              thickness: 2,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Email/Phone Field
+                    TextFormField(
+                      controller: emailController,
+                      decoration: const InputDecoration(
+                        labelText: ' Email ',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.email),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email or phone';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Password Field
+                    TextFormField(
+                      controller: passwordController,
+                      obscureText: obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.lock),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscurePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              obscurePassword = !obscurePassword;
+                            });
+                          },
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your password';
+                        }
+                        if (value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Login Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: isLoading
+                            ? null
+                            : () async {
+                                if (_formKey.currentState!.validate()) {
+                                  setState(() => isLoading = true);
+
+                                  try {
+                                    final result = await RestClient.login(
+                                      emailController.text,
+                                      passwordController.text,
+                                    );
+                                    log("api response :$result");
+                                    print(
+                                        "saving user data in sharepreference ");
+                                    log("saving user data in sharepreference ");
+
+                                    if (result["success"] == true &&
+                                        result.containsKey("data")) {
+                                      // ✅ Check success & data key
+                                      final userData = result["data"][
+                                          "user"]; // ✅ Get user details correctly
+
+                                      if (userData != null) {
+                                        await SharedPreferenceHelper
+                                            .saveUserData(
+                                                userData); // ✅ Store user data
+
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content: Text(result['message'])),
+                                        );
+                                        Get.offNamed(
+                                            '/dashboard'); // ✅ Navigate to Dashboard
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content:
+                                                  Text("User data not found!")),
+                                        );
+                                      }
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                            content: Text(result['message'] ??
+                                                "Login failed")),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              'An error occurred. Please try again.')),
+                                    );
+                                  } finally {
+                                    setState(() => isLoading = false);
+                                  }
+                                }
+                              },
+                        child: isLoading
+                            ? const CircularProgressIndicator()
+                            : const Text('LOGIN'),
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Signup Option
+                    TextButton(
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                              Get.toNamed("/SignUp");
+                            },
+                      child: const Text('Don\'t have an account? Sign up'),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
-
-              // Email/Phone Field
-              TextFormField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: ' Email ',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email or phone';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Password Field
-              TextFormField(
-                controller: passwordController,
-                obscureText: obscurePassword,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.lock),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      obscurePassword ? Icons.visibility : Icons.visibility_off,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        obscurePassword = !obscurePassword;
-                      });
-                    },
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
-                  }
-                  if (value.length < 6) {
-                    return 'Password must be at least 6 characters';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-
-              // Login Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: isLoading
-                      ? null
-                      : () async {
-                          if (_formKey.currentState!.validate()) {
-                            setState(() => isLoading = true);
-
-                            try {
-                              final result = await RestClient.login(
-                                emailController.text,
-                                passwordController.text,
-                              );
-
-                              if (result['success']) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(result['message'])),
-                                );
-                                // Navigate to home screen after successful login
-                                Get.offNamed('/dashboard');
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(result['message'])),
-                                );
-                              }
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text(
-                                        'An error occurred. Please try again.')),
-                              );
-                            } finally {
-                              setState(() => isLoading = false);
-                            }
-                          }
-                        },
-                  child: isLoading
-                      ? const CircularProgressIndicator()
-                      : const Text('LOGIN'),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Center(child: Text('Check your console for the FCM token.')),
-              const SizedBox(height: 8),
-
-              // OTP Login Option
-              /*    TextButton(
-                onPressed: isLoading
-                    ? null
-                    : () {
-                        // Implement OTP login navigation
-                        Navigator.pushNamed(context, '/otp-login');
-                      },
-                child: const Text('Login with OTP'),
-              ), */
-              const Spacer(),
-
-              // Signup Option
-              TextButton(
-                onPressed: isLoading
-                    ? null
-                    : () {
-                        Get.toNamed("/SignUp");
-                      },
-                child: const Text('Don\'t have an account? Sign up'),
-              ),
-            ],
+            ),
           ),
         ),
       ),

@@ -39,12 +39,19 @@ dependencies:
   syncfusion_flutter_gauges: ^22.2.6
   firebase_core: ^3.12.1
   firebase_messaging: ^15.2.4
+  url_launcher: ^6.3.1
+  flutter_launcher_icons: ^0.14.3
  
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: ^0.14.3
+flutter_launcher_icons: ^0.14.3
+
+flutter_icons: 
+  android: true
+  ios: true
+  image_path: "android/assets/images/playstore.png"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -67,6 +74,8 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - android\assets\images\trashee_collecter.jpg
+    - android\assets\images\trashee_collecter_logo_1.jpeg.jpg
+    - android\assets\images\playstore.png
  
 
   # An image asset can refer to one or more resolution-specific "variants", see

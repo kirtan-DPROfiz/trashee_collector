@@ -269,14 +269,14 @@ class DashboardScreen extends StatelessWidget {
   }
 } */
 
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:trashee_collecter/core/pages/DashboardPage/DashboardComponent/fullbins.dart'
-    show Fullbins;
-import 'package:trashee_collecter/core/pages/DashboardPage/DashboardComponent/totalbins.dart';
-import 'package:trashee_collecter/core/pages/logScreen.dart';
+import 'package:trashee_collecter/API/network%20manager/rest_client.dart';
+import 'package:trashee_collecter/core/controller/bins.dart';
 import 'package:trashee_collecter/core/pages/map_screen.dart';
 import 'package:trashee_collecter/core/pages/statistics_screen.dart';
+import 'package:trashee_collecter/localStorage/sharedpreferencehelper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -286,16 +286,24 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final Bins bins = Get.put(Bins());
+
+  void initState() {
+    super.initState();
+    Get.put(Bins());
+  }
+
   // Dummy data for bins (Replace with real data later)
-  final int totalBins = 100;
-  final int fullBins = 40; // 🔴 Full
-  final int emptyBins = 30; // 🟢 Empty
-  final int halfBins = 30; // 🟡 Half-full
+
+  // final int totalBins =  bins.emptybins.value;
+  //final int fullBins = 40; // 🔴 Full
+  //final int emptyBins = 30; // 🟢 Empty
+  //final int halfBins = 30; // 🟡 Half-full
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white70,
+      //backgroundColor: Colors.white70,
       appBar: AppBar(
         title: const Text("Smart Bin Dashboard"),
         backgroundColor: Colors.green,
@@ -313,7 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.yellowAccent),
+                  color: Colors.green),
             ),
             const SizedBox(height: 10),
             const Text(
@@ -326,20 +334,31 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildOverviewCard("Total Bins", totalBins, Colors.blue,
-                    Icons.delete, Totalbins()),
-                _buildOverviewCard("Full Bins", fullBins, Colors.red,
-                    Icons.warning, Fullbins()),
+                Obx(() => _buildOverviewCard(
+                      "Total Bins",
+                      bins.totalbins.value, // ✅ Dynamically updated
+                      Colors.blue,
+                      Icons.delete,
+                      "/allbins",
+                    )),
+                Obx(
+                  () => _buildOverviewCard("Full Bins", bins.fullbins.value,
+                      Colors.red, Icons.warning, '/fullbins'),
+                ),
               ],
             ),
             const SizedBox(height: 15),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                /*  _buildOverviewCard("Empty Bins", emptyBins, Colors.green,
-                    Icons.check_circle, OnTap),
-                _buildOverviewCard("Half-Full", halfBins, Colors.orange,
-                    Icons.hourglass_bottom), */
+                Obx(
+                  () => _buildOverviewCard("Empty Bins", bins.emptybins.value,
+                      Colors.green, Icons.check_circle, '/emptybins'),
+                ),
+                Obx(
+                  () => _buildOverviewCard("Half-Full", bins.halfbins.value,
+                      Colors.orange, Icons.hourglass_bottom, '/halfbins'),
+                ),
               ],
             ),
             const SizedBox(height: 30),
@@ -356,10 +375,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   MaterialPageRoute(builder: (context) => MapScreen()));
             }),
 
-            _buildQuickAccessTile("Statistics & Reports", Icons.bar_chart, () {
+            /*  _buildQuickAccessTile("Statistics & Reports", Icons.bar_chart, () {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => StatisticsScreen()));
-            }),
+            }), */
           ],
         ),
       ),
@@ -367,11 +386,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildOverviewCard(
-      String title, int count, Color color, IconData icon, Widget screen) {
+      String title, int count, Color color, IconData icon, String routeName) {
     return Expanded(
       child: InkWell(
         onTap: () {
-          screen;
+          Get.toNamed(routeName);
         },
         child: Card(
           shape:
@@ -416,6 +435,41 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Show Logout Confirmation Dialog:
+  void showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Logout"),
+          content: Text("Are you sure you want to logout?"),
+          actions: [
+            // Cancel Button
+            ElevatedButton(
+              onPressed: () {
+                Get.back(); // Close the dialog
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
+              child: Text("Cancel"),
+            ),
+            // Logout Button
+            ElevatedButton(
+              onPressed: () async {
+                log("user data is clearing...");
+                await SharedPreferenceHelper.logout(); // Clear stored data
+                log("user data is clear from the local-Storage");
+
+                Get.offAllNamed("/login"); // Redirect to Login Screen
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
+              child: Text("Logout"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildDrawer() {
     return Drawer(
       child: ListView(
@@ -432,28 +486,31 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontSize: 24,
                         fontWeight: FontWeight.bold)),
                 SizedBox(height: 8),
-                Text("Navigate through the app",
-                    style: TextStyle(color: Colors.white70)),
+                Text("Menu", style: TextStyle(color: Colors.white70)),
               ],
             ),
           ),
           ListTile(
             leading: const Icon(Icons.map),
             title: const Text("Smart Bin Map"),
-            onTap: () => Navigator.push(
-                context, MaterialPageRoute(builder: (context) => MapScreen())),
+            onTap: () => Get.toNamed('/map'),
           ),
-          ListTile(
+          /*  ListTile(
             leading: const Icon(Icons.bar_chart),
             title: const Text("Statistics & Reports"),
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (context) => StatisticsScreen())),
-          ),
+            onTap: () => Get.toNamed('/Statistics'),
+          ), */
           ListTile(
             leading: const Icon(Icons.list_alt_outlined),
             title: const Text("Log-Screen"),
-            onTap: () => Navigator.push(
-                context, MaterialPageRoute(builder: (context) => LogsScreen())),
+            onTap: () => Get.toNamed('/logs'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text("Log-out"),
+            onTap: () {
+              showLogoutDialog(context);
+            },
           ),
         ],
       ),

@@ -50,7 +50,10 @@ class _FullbinsState extends State<Fullbins> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text(" Details Of All Full Dustbins")),
+      appBar: AppBar(
+        title: const Text(" Details Of All Full Dustbins"),
+        backgroundColor: Colors.green,
+      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : errorMessage.isNotEmpty

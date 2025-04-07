@@ -7,6 +7,9 @@ import 'package:trashee_collecter/core/pages/DashboardPage/DashboardComponent/ha
 import 'package:trashee_collecter/core/pages/DashboardPage/DashboardComponent/total_empty_bin.dart';
 import 'package:trashee_collecter/core/pages/DashboardPage/DashboardComponent/totalbins.dart';
 import 'package:trashee_collecter/core/pages/DashboardPage/dashboard_screen.dart';
+import 'package:trashee_collecter/core/pages/logScreen.dart';
+import 'package:trashee_collecter/core/pages/map_screen.dart';
+import 'package:trashee_collecter/core/pages/statistics_screen.dart';
 
 class RouteNames {
   static final List<GetPage> Pages = [
@@ -17,5 +20,8 @@ class RouteNames {
     GetPage(name: Routes.allbins, page: () => Totalbins()),
     GetPage(name: Routes.emptydustbins, page: () => EmptyDustbinsScreen()),
     GetPage(name: Routes.halfdustbins, page: () => HalfFullDustbinsScreen()),
+    GetPage(name: Routes.mapScreen, page: () => MapScreen()),
+    GetPage(name: Routes.logscreen, page: () => LogsScreen()),
+    GetPage(name: Routes.StatisticsScreen, page: () => StatisticsScreen()),
   ];
 }

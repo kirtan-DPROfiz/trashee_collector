@@ -8,4 +8,7 @@ class Routes {
   static const allbins = '/allbins';
   static const emptydustbins = '/emptybins';
   static const halfdustbins = '/halfbins';
+  static const mapScreen = '/map';
+  static const StatisticsScreen = '/Statistics';
+  static const logscreen = '/logs';
 }

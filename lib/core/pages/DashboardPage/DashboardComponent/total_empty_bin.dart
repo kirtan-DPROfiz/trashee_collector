@@ -51,7 +51,9 @@ class _EmptyDustbinsScreenState extends State<EmptyDustbinsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text(" Details Of All Empty Dustbins")),
+      appBar: AppBar(
+          title: const Text("Detail ls Of All Empty Dustbins"),
+          backgroundColor: Colors.green),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : errorMessage.isNotEmpty

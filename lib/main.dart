@@ -4,26 +4,28 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
-import 'package:trashee_collecter/core/Routes/routes.dart';
 import 'package:trashee_collecter/core/Routes/routes_names.dart';
 import 'package:trashee_collecter/core/auth/login_screen.dart';
-import 'package:trashee_collecter/core/auth/signin_screen.dart';
 import 'package:trashee_collecter/core/pages/DashboardPage/dashboard_screen.dart';
 import 'package:trashee_collecter/firebase_options.dart';
+import 'package:trashee_collecter/localStorage/sharedpreferencehelper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  bool isLoggedIn = await SharedPreferenceHelper.isUserLoggedIn();
   try {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
   } catch (e) {
     log(e.toString());
   }
-  runApp(const TrasheeCollectorApp());
+
+  runApp(TrasheeCollectorApp(isLoggedIn: isLoggedIn));
 }
 
 class TrasheeCollectorApp extends StatelessWidget {
-  const TrasheeCollectorApp({super.key});
+  final bool isLoggedIn;
+  const TrasheeCollectorApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +42,7 @@ class TrasheeCollectorApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'Roboto',
       ),
-      initialRoute: Routes.allbins,
+      //initialRoute: Routes.loginScreen,
       getPages: RouteNames.Pages,
       /*    routes: {
         '/login': (context) => const LoginScreen(),
@@ -48,6 +50,7 @@ class TrasheeCollectorApp extends StatelessWidget {
         '/dashboard': (context) => HomeScreen(),
         // '/dashboard': (context) =>  HomeScreen(),
       } */
+      home: isLoggedIn ? HomeScreen() : LoginScreen(),
     );
   }
 }
